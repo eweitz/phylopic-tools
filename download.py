@@ -1,5 +1,6 @@
 import json
 import re
+import subprocess
 import urllib.request
 
 phylopic_url = 'http://phylopic.org'
@@ -12,6 +13,7 @@ def get_json(response):
 with urllib.request.urlopen(count_url) as f:
     count = str(get_json(f)['result'])
 
+#count = '10'
 options = 'string+credit+licenseURL+directNames'
 images_url = api_url + '/image/list/0/' + count + '?options=' + options
 
@@ -33,6 +35,14 @@ for d in image_data:
     print(d)
 
     uid = d['uid']
+
+
+    license = license_names[d['licenseURL']]
+    print(license)
+    if license not in set(('mark', 'zero')):
+        continue
+
+    credit = d['credit']
 
     if len(d['directNames']) == 0:
         #  e.g. http://phylopic.org/api/a/image/5e0d65db-501f-4e21-8a6c-a4791afcbc6f?options=directName
@@ -59,9 +69,6 @@ for d in image_data:
         taxon_image_count[slug_name] += 1
         slug_name += "_" + str(taxon_image_count[slug_name]) # e.g. homo-sapiens_2
 
-    license = license_names[d['licenseURL']]
-    credit = d['credit']
-
     svg_url = phylopic_url + '/assets/images/submissions/' + uid + '.svg'
     try:
         with urllib.request.urlopen(svg_url) as f:
@@ -70,3 +77,5 @@ for d in image_data:
         continue
 
     open('images/' + slug_name + '.svg', 'w').write(svg)
+
+subprocess.call(['svgo', '-f', 'images'])
