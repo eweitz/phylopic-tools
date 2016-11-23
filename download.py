@@ -29,6 +29,8 @@ license_names = {
 with urllib.request.urlopen(images_url) as f:
     image_data = get_json(f)['result']
 
+open('image_data.json', 'w').write(json.dumps(image_data))
+
 taxon_image_count = {}
 
 for d in image_data:
