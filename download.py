@@ -1,6 +1,7 @@
 import json
 import re
 import subprocess
+import sqlite3
 import urllib.request
 
 phylopic_url = 'http://phylopic.org'
@@ -29,15 +30,14 @@ license_names = {
 with urllib.request.urlopen(images_url) as f:
     image_data = get_json(f)['result']
 
-open('image_data.json', 'w').write(json.dumps(image_data))
-
 taxon_image_count = {}
+
+phylopics_data = []
 
 for d in image_data:
     print(d)
 
     uid = d['uid']
-
 
     license = license_names[d['licenseURL']]
     print(license)
@@ -77,7 +77,15 @@ for d in image_data:
             svg = f.read().decode('utf-8')
     except urllib.error.HTTPError as e:
         continue
-
+    phylopics_data.append({
+        'organism': name,
+        'uid': uid,
+        'license': license,
+        'credit': credit
+    })
     open('images/' + slug_name + '.svg', 'w').write(svg)
+
+phylopics_data = {'images': phylopics_data}
+open('images_metadata.json', 'w').write(json.dumps(phylopics_data))
 
 subprocess.call(['svgo', '-f', 'images'])
