@@ -3,13 +3,13 @@ import json
 import sqlite3
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--create', dest="create",
+parser.add_argument('--create', dest='create',
                     help='Create local PhyloPics database')
-parser.add_argument('--organism', dest="organism",
+parser.add_argument('--organism', dest='organism',
                     help='Organism filter, e.g. "Homo sapiens"')
-parser.add_argument('--license', dest="license",
+parser.add_argument('--license', dest='license',
                     help='License filter, e.g. zero')
-parser.add_argument('--credit', dest="credit",
+parser.add_argument('--credit', dest='credit',
                     help='Credit filter e.g. "T. Michael Keesey"')
 args = parser.parse_args()
 
@@ -17,16 +17,6 @@ create = args.create
 organism = args.organism
 license = args.license
 credit = args.credit
-
-if ',' in organism:
-    organism = [org.strip() for org in organism.split(',')]
-else:
-    organism = [organism]
-
-if ',' in license:
-    license = [lic.strip() for lic in license.split(',')]
-else:
-    license = [license]
 
 conn = sqlite3.connect('phylopics.db')
 c = conn.cursor()
@@ -48,7 +38,32 @@ def create_db():
 
     c.executemany('INSERT INTO phylopics VALUES (?,?,?,?)', phylopics)
 
-def apply_filter(selection):
+
+def get_selection():
+    selection = {}
+    raw_facets = [
+        ['organism', organism],
+        ['license', license],
+        ['credit', credit]
+    ]
+    for pair in raw_facets:
+        name = pair[0]
+        raw_filter = pair[1]
+        if raw_filter == None:
+            continue
+        filters = []
+        if ',' in raw_filter:
+            raw_filter = raw_filter.split(',')
+            for i, filt in enumerate(raw_filter):
+                filters.append([name + '_' + str(i), filt.strip()])
+        else:
+            filters.append([name, raw_filter])
+        selection[name] = filters
+
+    return selection
+
+
+def faceted_search(selection):
 
     where = []
     t = {}
@@ -58,29 +73,19 @@ def apply_filter(selection):
             print(filter)
             filters.append(facet + '=:' + filter[0])
             t[filter[0]] = filter[1]
-        filters = " OR ".join(filters)
+        filters = '(' + ' OR '.join(filters) + ')'
         where.append(filters)
-    where = " AND ".join(where)
-    print(where)
+    where = ' AND '.join(where)
+    #print(where)
 
     c.execute('SELECT * FROM phylopics WHERE ' + where, t)
     for row in c:
         print(row)
 
-selection = {}
-if organism != None:
-    orgs = []
-    for i, org in enumerate(organism):
-        orgs.append(['organism_' + str(i), org])
-    selection['organism'] = orgs
+selection = get_selection()
 
-if license != None:
-    lics = []
-    for i, lic in enumerate(license):
-        lics.append(['license_' + str(i), lic])
-    selection['license'] = lics
-
-apply_filter(selection)
+if len(selection.keys()) > 0:
+    faceted_search(selection)
 
 conn.commit()
 conn.close()
