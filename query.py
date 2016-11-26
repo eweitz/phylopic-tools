@@ -18,6 +18,16 @@ organism = args.organism
 license = args.license
 credit = args.credit
 
+if ',' in organism:
+    organism = [org.strip() for org in organism.split(',')]
+else:
+    organism = [organism]
+
+if ',' in license:
+    license = [lic.strip() for lic in license.split(',')]
+else:
+    license = [license]
+
 conn = sqlite3.connect('phylopics.db')
 c = conn.cursor()
 
@@ -38,19 +48,39 @@ def create_db():
 
     c.executemany('INSERT INTO phylopics VALUES (?,?,?,?)', phylopics)
 
-def filter(selection):
-    where = selection[0][0] + ' = ?'
-    t = (selection[1][0], )
+def apply_filter(selection):
+
+    where = []
+    t = {}
+    for facet in selection:
+        filters = []
+        for filter in selection[facet]:
+            print(filter)
+            filters.append(facet + '=:' + filter[0])
+            t[filter[0]] = filter[1]
+        filters = " OR ".join(filters)
+        where.append(filters)
+    where = " AND ".join(where)
+    print(where)
+
     c.execute('SELECT * FROM phylopics WHERE ' + where, t)
     for row in c:
         print(row)
 
-selection = [[], []]
+selection = {}
 if organism != None:
-    selection[0].append('organism')
-    selection[1].append(organism)
+    orgs = []
+    for i, org in enumerate(organism):
+        orgs.append(['organism_' + str(i), org])
+    selection['organism'] = orgs
 
-filter(selection)
+if license != None:
+    lics = []
+    for i, lic in enumerate(license):
+        lics.append(['license_' + str(i), lic])
+    selection['license'] = lics
+
+apply_filter(selection)
 
 conn.commit()
 conn.close()
