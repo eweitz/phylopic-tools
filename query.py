@@ -10,6 +10,8 @@ parser.add_argument('--create', dest='create', nargs='?',
 
 parser.add_argument('--organism', dest='organism',
                     help='Organism filter, e.g. "Homo sapiens"')
+parser.add_argument('--taxid', dest='taxid',
+                    help='NCBI Taxonomy ID filter, e.g. 9606')
 parser.add_argument('--descendants', dest='descendants', nargs='?',
                     help='Include descendant taxa of "organism" filter')
 
@@ -21,9 +23,10 @@ args = parser.parse_args()
 
 create = args.create
 organism = args.organism
+taxid = args.taxid
+descendants = args.descendants
 license = args.license
 credit = args.credit
-descendants = args.descendants
 
 ncbi = NCBITaxa()
 
@@ -66,7 +69,17 @@ def add_descendants(selection):
 
 
 def get_selection():
+    global organism, taxid, descendants, organism, license, credit
     selection = {}
+    if taxid != None:
+        if ',' in taxid:
+            taxid = [int(t) for t in taxid.split(',')]
+            taxid_orgs = ncbi.get_taxid_translator(taxid)
+            organism = [taxid_orgs[t] for t in taxid_orgs]
+        else:
+            taxid = int(taxid)
+            organism = [ncbi.get_taxid_translator([taxid])[taxid]]
+        organism = ','.join(organism)
     raw_facets = [
         ['organism', organism],
         ['license', license],
