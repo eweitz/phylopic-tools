@@ -1,10 +1,19 @@
 import argparse
 import json
 import sqlite3
+import textwrap
 
 from ete3 import NCBITaxa
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(
+    description='Query local PhyloPics database',
+    epilog=textwrap.dedent('''
+        EXAMPLES:
+        python query.py --organism "Homo sapiens"
+        python query.py --organism "Homininae" --descendants
+        python query.py --organism "Gallus gallus,Sus scrofa"'''),
+    formatter_class=argparse.RawDescriptionHelpFormatter
+)
 parser.add_argument('--create', dest='create', nargs='?',
                     help='Create local PhyloPics database and dependencies')
 
@@ -12,7 +21,7 @@ parser.add_argument('--organism', dest='organism',
                     help='Organism filter, e.g. "Homo sapiens"')
 parser.add_argument('--taxid', dest='taxid',
                     help='NCBI Taxonomy ID filter, e.g. 9606')
-parser.add_argument('--descendants', dest='descendants', nargs='?',
+parser.add_argument('--descendants', dest='descendants', action='store_true',
                     help='Include descendant taxa of "organism" filter')
 
 parser.add_argument('--license', dest='license',
@@ -112,7 +121,7 @@ def faceted_search(selection):
     for facet in selection:
         filters = []
         for filter in selection[facet]:
-            #print(filter)
+            # print(filter)
             filters.append(facet + '=:' + filter[0])
             t[filter[0]] = filter[1]
         filters = '(' + ' OR '.join(filters) + ')'
