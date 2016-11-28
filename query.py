@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import sqlite3
 import textwrap
 
@@ -14,7 +15,7 @@ parser = argparse.ArgumentParser(
         python query.py --organism "Gallus gallus,Sus scrofa"'''),
     formatter_class=argparse.RawDescriptionHelpFormatter
 )
-parser.add_argument('--create', dest='create', nargs='?',
+parser.add_argument('--create', dest='create', action='store_true',
                     help='Create local PhyloPics database and dependencies')
 
 parser.add_argument('--organism', dest='organism',
@@ -42,24 +43,59 @@ ncbi = NCBITaxa()
 conn = sqlite3.connect('phylopics.db')
 c = conn.cursor()
 
+def normalize_organism(organism, ncbi_cursor):
+    '''Normalizes PhyloPic organism name to one in NCBI Taxonomy database'''
+
+    words = organism.split()
+
+    ncbi_cursor.execute('SELECT taxid FROM synonym WHERE spname = ?', (organism, ))
+    for taxid in ncbi_cursor:
+        #print('Normalization success: ' + organism)
+        return ncbi.get_taxid_translator([taxid])[taxid]
+
+    if len(words) > 2:
+        normalized_organism = ' '.join(words[:2])
+        if len(ncbi.get_name_translator([normalized_organism])) > 0:
+            #print('Normalization success: ' + normalized_organism)
+            return normalized_organism
+        else:
+            #print('Normalization failure: ' + organism)
+            return organism
+    else:
+        #print('Normalization failure; len(words) <= 2: ' + organism)
+        return organism
+
+
 def create_db():
-    c.execute('''CREATE TABLE phylopics
-                 (organism text, uid text, license text, credit text)''')
+
+    if os.path.exists(ncbi.dbfile) == False:
+        ncbi.update_taxonomy_database()
+
+    ncbi_conn = sqlite3.connect(ncbi.dbfile)
+    ncbi_cursor = ncbi_conn.cursor()
+
+    c.execute('''DROP TABLE phylopics''')
+    c.execute('''CREATE TABLE phylopics (organism text,
+                 uid text, license text, credit text)''')
+
     phylopics = []
     with open('images_metadata.json') as f:
         image_data = json.loads(f.read())['images']
 
     for image in image_data:
+
+        organism = image['organism']
+        if len(ncbi.get_name_translator([organism])) == 0:
+            organism = normalize_organism(organism, ncbi_cursor)
+
         phylopics.append((
-            image['organism'],
+            organism,
             image['uid'],
             image['license'],
             image['credit']
         ))
 
     c.executemany('INSERT INTO phylopics VALUES (?,?,?,?)', phylopics)
-
-    ncbi.update_taxonomy_database()
 
 
 def add_descendants(selection):
@@ -108,7 +144,7 @@ def get_selection():
             filters.append([name, raw_filter])
         selection[name] = filters
 
-    if descendants != None:
+    if organism != None and descendants != False:
         selection = add_descendants(selection)
 
     return selection
