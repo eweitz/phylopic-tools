@@ -81,7 +81,8 @@ for d in image_data:
         'organism': name,
         'uid': uid,
         'license': license,
-        'credit': credit
+        'credit': credit,
+        'slug': slug_name
     })
     open('images/' + slug_name + '.svg', 'w').write(svg)
 

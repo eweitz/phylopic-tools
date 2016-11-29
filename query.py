@@ -76,7 +76,7 @@ def create_db():
 
     c.execute('''DROP TABLE phylopics''')
     c.execute('''CREATE TABLE phylopics (organism text,
-                 uid text, license text, credit text)''')
+                 uid text, license text, credit text, slug text)''')
 
     phylopics = []
     with open('images_metadata.json') as f:
@@ -92,10 +92,11 @@ def create_db():
             organism,
             image['uid'],
             image['license'],
-            image['credit']
+            image['credit'],
+            image['slug']
         ))
 
-    c.executemany('INSERT INTO phylopics VALUES (?,?,?,?)', phylopics)
+    c.executemany('INSERT INTO phylopics VALUES (?,?,?,?,?)', phylopics)
 
 
 def add_descendants(selection):
@@ -165,9 +166,9 @@ def faceted_search(selection):
     where = ' AND '.join(where)
     #print(where)
 
-    c.execute('SELECT * FROM phylopics WHERE ' + where, t)
+    c.execute('SELECT slug FROM phylopics WHERE ' + where, t)
     for row in c:
-        print(row)
+        print('images/' + row[0] + '.svg')
 
 if create != None:
     create_db()
