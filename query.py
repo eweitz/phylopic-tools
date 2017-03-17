@@ -74,7 +74,7 @@ def create_db():
     ncbi_conn = sqlite3.connect(ncbi.dbfile)
     ncbi_cursor = ncbi_conn.cursor()
 
-    c.execute('''DROP TABLE phylopics''')
+    c.execute('''DROP TABLE IF EXISTS phylopics''')
     c.execute('''CREATE TABLE phylopics (organism text,
                  uid text, license text, credit text, slug text)''')
 
