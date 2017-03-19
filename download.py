@@ -1,5 +1,6 @@
 import json
 import re
+import os
 import subprocess
 import sqlite3
 import urllib.request
@@ -11,8 +12,10 @@ count_url = api_url + '/image/count'
 def get_json(response):
     return json.loads(response.read().decode('utf-8'))
 
+print('Fetching total image count from PhyloPic...')
 with urllib.request.urlopen(count_url) as f:
     count = str(get_json(f)['result'])
+print('Total PhyloPic images: ' + count)
 
 #count = '10'
 options = 'string+credit+licenseURL+directNames'
@@ -27,6 +30,7 @@ license_names = {
     'http://creativecommons.org/publicdomain/zero/1.0/': 'zero'
 }
 
+print('Fetching all image URLs...')
 with urllib.request.urlopen(images_url) as f:
     image_data = get_json(f)['result']
 
@@ -34,15 +38,15 @@ taxon_image_count = {}
 
 phylopics_data = []
 
-for d in image_data:
-    print(d)
+for i, d in enumerate(image_data):
+    print(str(i) + ' of ' + count + ': ' + str(d))
 
     uid = d['uid']
 
     license = license_names[d['licenseURL']]
-    print(license)
-    if license not in set(('mark', 'zero')):
-        continue
+
+    #if license not in set(('mark', 'zero')):
+    #   continue
 
     credit = d['credit']
 
@@ -88,5 +92,13 @@ for d in image_data:
 
 phylopics_data = {'images': phylopics_data}
 open('images_metadata.json', 'w').write(json.dumps(phylopics_data))
+
+for base_dir, dirs, files in os.walk('images'):
+    for file_name in files:
+        file_path = 'images/' + file_name
+        file_size = os.path.getsize(file_path) # in bytes
+        if file_size > 4E6: # > 4 MB
+            print('File too large (' + str(file_size) + '): ' + file_path)
+            os.remove(file_path)
 
 subprocess.call(['svgo', '-f', 'images'])
