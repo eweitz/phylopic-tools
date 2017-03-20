@@ -107,7 +107,12 @@ for i, d in enumerate(image_data):
             svg_raw = f.read().decode('utf-8')
             svg_xml = ET.fromstring(svg_raw)
             metadata_raw = get_metadata(name, uid, license_url, credit)
-            metadata = ET.fromstring(metadata_raw)
+            try:
+                metadata = ET.fromstring(metadata_raw)
+            except Exception as e:
+                print(e)
+                print('metadata:')
+                print(metadata)
             svg_xml.insert(0, metadata)
             svg_etree = ET.ElementTree(svg_xml)
 
