@@ -2,14 +2,14 @@
 
 Enhanced search for silhouette images of organisms from [PhyloPic](http://phylopic.org/). 
 
-Easily query all PhyloPic SVGs by calling a Python script, using simplied syntax.  Or construct more complex queries in a local SQLite database.  `phylopic-tools` also offers retrieval of organism images by querying higher-level taxonomic names (e.g. Mammalia), enabled by [ETE3](https://github.com/etetoolkit/ete) and data from [NCBI Taxonomy](https://www.ncbi.nlm.nih.gov/taxonomy).
+Easily query all PhyloPic SVGs by calling a Python script, using simplied syntax.  Or construct more complex queries in a local SQLite database.  `phylopic-tools` also offers retrieval of organism images by querying higher-level taxonomic names (e.g. Primates), enabled by [ETE3](https://github.com/etetoolkit/ete) and data from [NCBI Taxonomy](https://www.ncbi.nlm.nih.gov/taxonomy).
 
 Features:
 * Local copy of all PhyloPic SVG images
 * SVGs compressed for better page load times
 * Get all PhyloPic SVGs by:
   * Organism (e.g. _Homo sapiens_)
-  * Taxonomic descendants (e.g. all Mammalia, or all Homininae)
+  * Taxonomic descendants (e.g. all Homininae, or all Primates)
   * License (e.g. public domain)
   * Creator (e.g. T. Michael Keesey)
 
