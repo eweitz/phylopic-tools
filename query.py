@@ -153,22 +153,56 @@ def get_selection():
 
 def faceted_search(selection):
 
-    where = []
     t = {}
+
+    results = []
+
+    where = []
+    where_batches = []
+
     for facet in selection:
         filters = []
         for filter in selection[facet]:
             # print(filter)
             filters.append(facet + '=:' + filter[0])
             t[filter[0]] = filter[1]
-        filters = '(' + ' OR '.join(filters) + ')'
-        where.append(filters)
-    where = ' AND '.join(where)
-    #print(where)
 
-    c.execute('SELECT slug FROM phylopics WHERE ' + where, t)
-    for row in c:
-        print('images/' + row[0] + '.svg')
+        # Each facet is expressed as a set of "OR" clauses -- one OR per taxon
+        # matching the filter.  For higher-level taxa (e.g. Mammalia), that
+        # can yield > 10,000 OR clauses, exceeding SQLite's "maximum depth of
+        # an expression tree"
+        # (https://www.sqlite.org/limits.html#max_expr_depth).  To work around
+        # that, we batch such queries, executing them with up to 1000
+        # OR clauses per query.
+        filter_batches = []
+        max_expr_depth = 1000
+        i = 0
+        while len(filters) > max_expr_depth * i:
+            start = max_expr_depth * i
+            if len(filters) < max_expr_depth:
+                stop = len(filters) - 1
+            else:
+                stop = max_expr_depth * (i + 1) - 1
+            filter_batches.append(filters[start:stop])
+            i += 1
+        if len(filters) - max_expr_depth * i > 0:
+            # Append remainder
+            start = max_expr_depth * i
+            stop = len(filters) - 1
+            filter_batches.append(filters[start:stop])
+
+        for filter_batch in filter_batches:
+            where_batches.append('(' + ' OR '.join(filter_batch) + ')')
+
+    for where in where_batches:
+        where = ' AND '.join(where)
+        print(where)
+        c.execute('SELECT slug FROM phylopics WHERE ' + where, t)
+        for row in c:
+            results.append('images/' + row[0] + '.svg')
+
+    for result in results:
+        print(result)
 
 if create != None:
     create_db()
