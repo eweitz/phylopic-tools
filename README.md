@@ -33,3 +33,29 @@ $ virtualenv -p python3 env
 $ pip install -r requirements.txt
 $ python3 query.py --create
 ```
+
+# Examples
+
+All images of human:
+```
+python3 query.py --organism "Homo sapiens"
+```
+
+All images of primates:
+```
+python3 query.py --organism "Primates" --descendants
+```
+
+All images of chicken or pig:
+```
+python3 query.py --organism "Gallus gallus,Sus scrofa"
+```
+
+All images that are in the public domain
+```
+python3 query.py --license "zero,mark"
+```
+All images of Carnivora that are in the public domain:
+```
+python3 query.py --organism "Carnivora" --descendants --license "zero,mark"
+```
