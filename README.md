@@ -31,6 +31,5 @@ To enable querying of PhyloPic SVGs, clone this repo as described above, then:
 $ cd phylopic-tools
 $ virtualenv -p python3 env
 $ pip install -r requirements.txt
-$ python3 download.py
 $ python3 query.py --create
 ```
